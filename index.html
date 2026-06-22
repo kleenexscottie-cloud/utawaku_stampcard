@@ -3,1192 +3,515 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>動物スタンプラリー & デコレーション台紙</title>
+  <title>3x3 シークレット・ビンゴスタンプ</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons (for UI icons) -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- html2canvas (for saving the canvas as an image) -->
+  <!-- Font Awesome (for icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- html2canvas (For capturing the card as image) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <!-- Google Fonts for Cute Style -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
-  
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500;700&display=swap');
+    
     body {
-      font-family: 'Zen Maru Gothic', sans-serif;
-      background-color: #fcf8f2;
-      background-image: radial-gradient(#eadeca 1px, transparent 1px);
-      background-size: 20px 20px;
+      font-family: 'Kiwi Maru', 'Helvetica Neue', Arial, sans-serif;
+      background-color: #fefaf0;
     }
-    .cute-title {
-      font-family: 'Yusei+Magic', sans-serif;
+
+    /* スタンプが押されるときのアニメーション */
+    @keyframes stamp-animation {
+      0% {
+        transform: scale(3);
+        opacity: 0;
+      }
+      80% {
+        transform: scale(0.9);
+        opacity: 0.9;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
-    /* スタンプのようなかすれ・インク感を出すためのブレンドモード */
-    .stamp-element {
-      mix-blend-mode: multiply;
-      pointer-events: auto;
-      user-select: none;
-    }
-    /* 紙の質感を表現 */
-    .paper-texture {
-      background-color: #faf6ee;
-      background-image: 
-        linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
-      background-size: 20px 20px;
-      position: relative;
-    }
-    /* コルクボード風の背景 */
-    .cork-board {
-      background-color: #d7a15c;
-      background-image: radial-gradient(rgba(0,0,0,0.15) 15%, transparent 16%),
-                        radial-gradient(rgba(0,0,0,0.15) 15%, transparent 16%);
-      background-size: 8px 8px;
-      background-position: 0 0, 4px 4px;
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+
+    .stamp-active {
+      animation: stamp-animation 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 text-slate-800">
+<body class="min-h-screen flex flex-col items-center justify-between p-4 md:p-8 text-slate-800">
 
   <!-- ヘッダー -->
-  <header class="w-full max-w-5xl text-center mb-4">
-    <h1 class="text-3xl md:text-4xl font-bold text-amber-800 cute-title flex items-center justify-center gap-2 drop-shadow">
-      🐾 動物スタンプデコ台紙 🐾
+  <header class="w-full max-w-md text-center my-4">
+    <h1 class="text-3xl font-bold text-amber-600 flex items-center justify-center gap-2">
+      <i class="fa-solid fa-circle-question text-amber-400 animate-pulse"></i>
+      シークレット・ビンゴ
+      <i class="fa-solid fa-circle-question text-amber-400 animate-pulse"></i>
     </h1>
-    <p class="text-sm text-amber-900/70 mt-1">
-      キーワードを入力してスタンプをゲット！台紙にポンポン押して遊ぼう
-    </p>
+    <p class="text-xs text-slate-500 mt-1">言葉を当てて、隠された画像付きマスをオープンしよう！</p>
   </header>
 
   <!-- メインコンテンツ -->
-  <main class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-grow">
+  <main class="w-full max-w-md flex-grow flex flex-col items-center justify-center gap-6">
     
-    <!-- 左側：コントロール＆スタンプパネル（5カラム） -->
-    <div class="lg:col-span-5 space-y-4">
-      
-      <!-- 1. キーワード入力エリア -->
-      <div class="bg-white p-5 rounded-2xl shadow-md border-4 border-amber-200/60">
-        <h3 class="text-lg font-bold text-amber-900 mb-2 flex items-center gap-2">
-          <i data-lucide="key-round" class="w-5 h-5 text-amber-500"></i>
-          キーワードでスタンプを探す
-        </h3>
-        <p class="text-xs text-slate-500 mb-3 leading-relaxed">
-          「cat」「dog」「rabbit」「bear」（または日本語）を入力すると、その動物のスタンプが使えるようになります！
-        </p>
-        
-        <div class="flex gap-2 mb-3">
-          <input type="text" id="keyword-input" 
-                 placeholder="例: cat / ねこ" 
-                 class="flex-grow px-4 py-2 border-2 border-amber-100 rounded-xl focus:outline-none focus:border-amber-400 text-sm font-semibold transition-colors">
-          <button id="unlock-btn" 
-                  class="bg-amber-500 hover:bg-amber-600 active:transform active:scale-95 text-white font-bold px-4 py-2 rounded-xl transition-all text-sm shadow flex items-center gap-1">
-            <span>GET!</span>
-          </button>
-        </div>
-
-        <!-- キーワード一覧とアンロック状況 -->
-        <div class="grid grid-cols-4 gap-1.5 text-center mt-3">
-          <div id="hint-cat" class="text-xs p-1.5 rounded-lg border bg-slate-50 border-slate-200 text-slate-400 font-semibold transition-all">
-            🐱 ねこ
-          </div>
-          <div id="hint-dog" class="text-xs p-1.5 rounded-lg border bg-slate-50 border-slate-200 text-slate-400 font-semibold transition-all">
-            🐶 いぬ
-          </div>
-          <div id="hint-rabbit" class="text-xs p-1.5 rounded-lg border bg-slate-50 border-slate-200 text-slate-400 font-semibold transition-all">
-            🐰 うさぎ
-          </div>
-          <div id="hint-bear" class="text-xs p-1.5 rounded-lg border bg-slate-50 border-slate-200 text-slate-400 font-semibold transition-all">
-            🐻 くま
-          </div>
-        </div>
-      </div>
-
-      <!-- 2. スタンプセレクト＆インク調整 -->
-      <div class="bg-white p-5 rounded-2xl shadow-md border-4 border-amber-200/60 space-y-4">
-        <!-- 選択中のスタンプ -->
-        <div>
-          <h3 class="text-lg font-bold text-amber-900 mb-2 flex items-center justify-between">
-            <span class="flex items-center gap-2">
-              <i data-lucide="smile" class="w-5 h-5 text-amber-500"></i>
-              アンロックしたスタンプ
-            </span>
-            <span id="unlocked-count" class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">0 / 4</span>
-          </h3>
-          
-          <!-- スタンプ選択パレット -->
-          <div id="stamp-palette" class="grid grid-cols-4 gap-3 py-1">
-            <!-- JavaScriptでアンロックされたらここに表示されます -->
-            <div class="col-span-4 py-6 text-center text-xs text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
-              キーワードを入力してスタンプを開放してね！
-            </div>
-          </div>
-        </div>
-
-        <!-- インク色セレクト -->
-        <div>
-          <h4 class="text-sm font-bold text-amber-900 mb-2 flex items-center gap-1">
-            <i data-lucide="palette" class="w-4 h-4 text-amber-500"></i>
-            インクの色を選ぶ
-          </h4>
-          <div class="flex flex-wrap gap-2" id="ink-palette">
-            <!-- インクボタン（朱色、藍色、緑、ピンク、黒など） -->
-            <button class="color-btn w-8 h-8 rounded-full border-2 border-white shadow-md active:scale-90 transition-transform relative" data-color="#E15243" style="background-color: #E15243;">
-              <span class="absolute inset-0 m-auto w-2 h-2 bg-white rounded-full hidden"></span>
-            </button>
-            <button class="color-btn w-8 h-8 rounded-full border-2 border-white shadow-md active:scale-90 transition-transform relative" data-color="#1B4F72" style="background-color: #1B4F72;">
-              <span class="absolute inset-0 m-auto w-2 h-2 bg-white rounded-full hidden"></span>
-            </button>
-            <button class="color-btn w-8 h-8 rounded-full border-2 border-white shadow-md active:scale-90 transition-transform relative" data-color="#1E8449" style="background-color: #1E8449;">
-              <span class="absolute inset-0 m-auto w-2 h-2 bg-white rounded-full hidden"></span>
-            </button>
-            <button class="color-btn w-8 h-8 rounded-full border-2 border-white shadow-md active:scale-90 transition-transform relative" data-color="#D946EF" style="background-color: #D946EF;">
-              <span class="absolute inset-0 m-auto w-2 h-2 bg-white rounded-full hidden"></span>
-            </button>
-            <button class="color-btn w-8 h-8 rounded-full border-2 border-white shadow-md active:scale-90 transition-transform relative" data-color="#D4AC0D" style="background-color: #D4AC0D;">
-              <span class="absolute inset-0 m-auto w-2 h-2 bg-white rounded-full hidden"></span>
-            </button>
-            <button class="color-btn w-8 h-8 rounded-full border-2 border-white shadow-md active:scale-90 transition-transform relative" data-color="#2C3E50" style="background-color: #2C3E50;">
-              <span class="absolute inset-0 m-auto w-2 h-2 bg-white rounded-full hidden"></span>
-            </button>
-          </div>
-        </div>
-
-        <!-- ツール設定（サイズ・回転） -->
-        <div class="pt-2 border-t border-slate-100 space-y-3">
-          <div>
-            <div class="flex justify-between text-xs text-slate-600 font-semibold mb-1">
-              <span>スタンプのサイズ</span>
-              <span id="size-value">80px</span>
-            </div>
-            <input type="range" id="stamp-size" min="40" max="150" value="80" class="w-full h-1.5 bg-amber-100 rounded-lg appearance-none cursor-pointer accent-amber-500">
-          </div>
-          <div>
-            <div class="flex justify-between text-xs text-slate-600 font-semibold mb-1">
-              <span>スタンプの角度</span>
-              <span id="rotation-value">0°</span>
-            </div>
-            <input type="range" id="stamp-rotation" min="-180" max="180" value="0" class="w-full h-1.5 bg-amber-100 rounded-lg appearance-none cursor-pointer accent-amber-500">
-          </div>
-        </div>
-      </div>
-
-      <!-- 操作説明 -->
-      <div class="bg-amber-50/80 p-4 rounded-xl border border-amber-200/60 text-xs text-amber-900/85 space-y-1.5">
-        <h4 class="font-bold flex items-center gap-1 text-amber-950">💡 あそびかた</h4>
-        <p>1. キーワードを入れて、スタンプを手に入れます。</p>
-        <p>2. パレットからスタンプと色を選びます。</p>
-        <p>3. 右側の<strong>台紙の上をクリック（またはタップ）</strong>してスタンプを押します！</p>
-        <p>4. 押したスタンプをクリックすると、<strong>移動・回転・削除</strong>ができます。</p>
-      </div>
+    <!-- 設定 & アラートエリア -->
+    <div id="alertBox" class="w-full bg-amber-100 border border-amber-300 text-amber-800 px-4 py-3 rounded-xl hidden transition-all duration-300 text-center text-sm font-semibold shadow-sm">
+      <!-- メッセージが動的に入ります -->
     </div>
 
-    <!-- 右側：スタンプ台紙（7カラム） -->
-    <div class="lg:col-span-7 flex flex-col space-y-4">
+    <!-- ビンゴカード外枠 -->
+    <div id="bingo-card" class="relative w-full aspect-square bg-amber-50 border-8 border-amber-500 rounded-3xl p-4 shadow-xl flex flex-col justify-between overflow-hidden">
       
-      <!-- 台紙の操作バー -->
-      <div class="flex flex-wrap justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-amber-100 gap-2">
-        <div class="flex items-center gap-1 text-sm font-bold text-amber-900">
-          <i data-lucide="image" class="w-4 h-4 text-amber-500"></i>
-          台紙シート
+      <!-- 3x3 グリッド -->
+      <div class="grid grid-cols-3 grid-rows-3 gap-3 w-full h-full z-10">
+        <!-- マス目 1~9 (JSで動的にレンダリング) -->
+        <div id="grid-container" class="contents"></div>
+      </div>
+
+    </div>
+
+    <!-- コントロールパネル -->
+    <div class="w-full bg-white p-5 rounded-2xl shadow-md border border-amber-100 flex flex-col gap-4">
+      
+      <!-- テキスト入力フォーム（スタンプを押す用） -->
+      <div class="flex flex-col gap-2">
+        <label for="searchWord" class="text-sm font-bold text-amber-700 flex items-center gap-1">
+          <i class="fa-solid fa-key"></i> 隠された言葉を入力：
+        </label>
+        <div class="flex gap-2">
+          <input type="text" id="searchWord" placeholder="例: りんご" 
+                 class="flex-grow px-4 py-3 rounded-xl border-2 border-amber-200 focus:border-amber-500 focus:outline-none transition text-base" />
+          <button id="btnStamp" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold px-5 py-3 rounded-xl shadow-md transition flex items-center gap-1 shrink-0">
+            <span>回答する!</span>
+          </button>
         </div>
+      </div>
+
+      <!-- 画像として保存 & 各種設定 -->
+      <div class="flex flex-col gap-3 border-t border-slate-100 pt-3">
         
-        <div class="flex gap-2 items-center text-xs">
-          <!-- 台紙テーマ変更 -->
-          <select id="bg-selector" class="px-2 py-1.5 border border-slate-200 rounded-lg font-bold text-slate-700 bg-slate-50 focus:outline-none">
-            <option value="grid">スタンプカード (方眼)</option>
-            <option value="notebook">シンプルノート</option>
-            <option value="nature">もりの中 (グリーン)</option>
-            <option value="wood">木製デスク風</option>
-          </select>
+        <!-- 画像保存ボタン -->
+        <button id="btnSaveImage" class="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-camera"></i>
+          <span>カードを画像として保存</span>
+        </button>
 
-          <!-- 全クリア -->
-          <button id="clear-btn" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold transition-colors flex items-center gap-1">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            全部消す
+        <div class="flex gap-2 justify-between items-center mt-1">
+          <button id="btnEdit" class="text-sm font-semibold text-slate-500 hover:text-amber-600 flex items-center gap-1 transition px-3 py-2 rounded-lg hover:bg-amber-50">
+            <i class="fa-solid fa-pen-to-square"></i> <span id="editText">カードを編集する</span>
           </button>
-
-          <!-- 画像保存 -->
-          <button id="save-btn" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg font-bold shadow transition-colors flex items-center gap-1">
-            <i data-lucide="download" class="w-3.5 h-3.5"></i>
-            画像で保存
+          <button id="btnReset" class="text-sm font-semibold text-rose-500 hover:text-rose-700 flex items-center gap-1 transition px-3 py-2 rounded-lg hover:bg-rose-50">
+            <i class="fa-solid fa-rotate-right"></i> 全リセット
           </button>
         </div>
       </div>
 
-      <!-- 台紙エリア -->
-      <div class="cork-board p-4 rounded-3xl relative overflow-hidden flex justify-center items-center shadow-lg">
-        <div id="stamp-sheet" class="paper-texture w-full aspect-[4/3] rounded-2xl shadow-inner relative overflow-hidden transition-all duration-300" style="touch-action: none;">
-          
-          <!-- 台紙内のデザイン装飾用要素 (グリッド・サークルなど) -->
-          <div id="sheet-decorations" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-6">
-            <!-- スタンプカードデザイン時用のマス目 (初期状態) -->
-            <div class="w-full h-full flex flex-col justify-between" id="grid-stamp-card">
-              <div class="text-center py-2">
-                <h2 class="text-xl font-bold tracking-widest text-amber-800/80 cute-title">ANIMAL STAMP RALLY</h2>
-                <div class="w-32 h-0.5 bg-amber-800/40 mx-auto mt-1"></div>
-              </div>
-              <div class="grid grid-cols-4 gap-4 my-auto px-4">
-                <div class="aspect-square rounded-full border-4 border-dashed border-amber-800/20 flex items-center justify-center text-amber-800/20 font-bold text-lg">1</div>
-                <div class="aspect-square rounded-full border-4 border-dashed border-amber-800/20 flex items-center justify-center text-amber-800/20 font-bold text-lg">2</div>
-                <div class="aspect-square rounded-full border-4 border-dashed border-amber-800/20 flex items-center justify-center text-amber-800/20 font-bold text-lg">3</div>
-                <div class="aspect-square rounded-full border-4 border-dashed border-amber-800/20 flex items-center justify-center text-amber-800/20 font-bold text-lg">4</div>
-              </div>
-              <div class="text-center text-[10px] text-amber-800/40">
-                スタンプを4つきれいに並べて押してみよう！
-              </div>
-            </div>
-          </div>
+    </div>
 
-          <!-- 実際にスタンプを配置するレイヤー -->
-          <div id="stamp-layer" class="absolute inset-0"></div>
-
-          <!-- パーティクル表示レイヤー -->
-          <div id="particle-layer" class="absolute inset-0 pointer-events-none z-40"></div>
-
-          <!-- スタンプ選択時の操作リング（移動、削除、回転） -->
-          <div id="edit-overlay" class="absolute pointer-events-none z-50 hidden border-2 border-dashed border-amber-500 rounded-full">
-            <!-- 削除ボタン -->
-            <button id="stamp-delete-btn" class="absolute -top-3.5 -right-3.5 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow pointer-events-auto active:scale-90 transition-transform">
-              <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-            <!-- 回転つまみ -->
-            <button id="stamp-rotate-handle" class="absolute -bottom-3.5 left-1/2 -translate-x-1/2 w-7 h-7 bg-amber-500 hover:bg-amber-600 text-white rounded-full flex items-center justify-center shadow pointer-events-auto active:scale-90 transition-transform cursor-grab">
-              <i data-lucide="rotate-cw" class="w-4 h-4"></i>
-            </button>
-          </div>
-
-        </div>
+    <!-- ビンゴお祝いモーダル -->
+    <div id="bingoModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-3xl p-6 text-center max-w-sm w-full shadow-2xl border-4 border-amber-400 animate-bounce-short">
+        <div class="text-5xl my-2">🎉</div>
+        <h2 class="text-3xl font-extrabold text-amber-600 mb-2">BINGO!!</h2>
+        <p class="text-slate-600 font-semibold mb-4">すべてのワードをクリアして、ビンゴが完成しました！</p>
+        <button id="btnCloseModal" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition">
+          閉じる
+        </button>
       </div>
-      
     </div>
 
   </main>
 
   <!-- フッター -->
-  <footer class="w-full text-center text-xs text-slate-400 py-4 mt-6 border-t border-slate-200">
-    <p>© 2026 動物スタンプ台紙デコレーター. ポンッとスタンプを楽しもう！</p>
+  <footer class="w-full text-center text-xs text-slate-400 my-4">
+    3x3 Bingo Stamp App &copy; 2026
   </footer>
 
-  <!-- お知らせ通知用ポップアップ -->
-  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs md:text-sm px-5 py-3 rounded-full shadow-xl opacity-0 translate-y-4 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2">
-    <span id="toast-icon">✨</span>
-    <span id="toast-message">メッセージ</span>
-  </div>
-
+  <!-- アプリスクリプト -->
   <script>
-    // --- 音響効果用の簡易シンセサイザー (Web Audio API) ---
-    const playStampSound = () => {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // 1つめの音（アタック：ぽんっ）
-        const osc1 = ctx.createOscillator();
-        const gain1 = ctx.createGain();
-        osc1.connect(gain1);
-        gain1.connect(ctx.destination);
+    // 初期データ (食べ物テーマ + 高画質画像)
+    const defaultWords = [
+      { word: "りんご", imageUrl: "https://kleenexscottie-cloud.github.io/utawaku_stampcard/image/ringo.png" },
+      { word: "バナナ", imageUrl: "https://kleenexscottie-cloud.github.io/utawaku_stampcard/image/banana.png" },
+      { word: "みかん", imageUrl: "https://kleenexscottie-cloud.github.io/utawaku_stampcard/image/mikan.png" },
+      { word: "ぶどう", imageUrl: "https://kleenexscottie-cloud.github.io/utawaku_stampcard/image/budou.png" },
+      { word: "メロン", imageUrl: "https://kleenexscottie-cloud.github.io/utawaku_stampcard/image/meron.png" },
+      { word: "いちご", imageUrl: "https://kleenexscottie-cloud.github.io/utawaku_stampcard/image/itigo.png" },
+      { word: "すいか", imageUrl: "https://kleenexscottie-cloud.github.io/utawaku_stampcard/image/suika.png" },
+      { word: "キウイ", imageUrl: "https://kleenexscottie-cloud.github.io/utawaku_stampcard/image/kiui.png" },
+      { word: "れもん", imageUrl: "https://kleenexscottie-cloud.github.io/utawaku_stampcard/image/remon.png" }
+    ];
 
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(150, ctx.currentTime);
-        osc1.frequency.exponentialRampToValueAtTime(350, ctx.currentTime + 0.08);
+    // 状態管理
+    let bingoData = []; // { id, word, imageUrl, stamped }
+    let isEditing = false;
 
-        gain1.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+    // DOM要素
+    const gridContainer = document.getElementById('grid-container');
+    const bingoCard = document.getElementById('bingo-card');
+    const searchWordInput = document.getElementById('searchWord');
+    const btnStamp = document.getElementById('btnStamp');
+    const btnSaveImage = document.getElementById('btnSaveImage');
+    const btnEdit = document.getElementById('btnEdit');
+    const btnReset = document.getElementById('btnReset');
+    const editText = document.getElementById('editText');
+    const alertBox = document.getElementById('alertBox');
+    const bingoModal = document.getElementById('bingoModal');
+    const btnCloseModal = document.getElementById('btnCloseModal');
 
-        osc1.start();
-        osc1.stop(ctx.currentTime + 0.12);
-
-        // 2つめの音（高音：キラッ）
-        const osc2 = ctx.createOscillator();
-        const gain2 = ctx.createGain();
-        osc2.connect(gain2);
-        gain2.connect(ctx.destination);
-
-        osc2.type = 'triangle';
-        osc2.frequency.setValueAtTime(800, ctx.currentTime);
-        osc2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.05);
-
-        gain2.gain.setValueAtTime(0.05, ctx.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-
-        osc2.start();
-        osc2.stop(ctx.currentTime + 0.15);
-      } catch (e) {
-        console.log("Audio not supported or blocked");
-      }
-    };
-
-    const playUnlockSound = () => {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const now = ctx.currentTime;
-        
-        const playNote = (freq, start, duration) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, start);
-          gain.gain.setValueAtTime(0.15, start);
-          gain.gain.exponentialRampToValueAtTime(0.01, start + duration);
-          osc.start(start);
-          osc.stop(start + duration);
-        };
-
-        playNote(523.25, now, 0.15);       // ド (C5)
-        playNote(659.25, now + 0.1, 0.15);  // ミ (E5)
-        playNote(783.99, now + 0.2, 0.15);  // ソ (G5)
-        playNote(1046.50, now + 0.3, 0.3);  // ド (C6)
-      } catch (e) {
-        console.log("Audio not supported or blocked");
-      }
-    };
-
-    // --- 動物のSVGスタンプ定義 ---
-    const STAMP_SVGS = {
-      cat: `
-        <g class="stamp-ink">
-          <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="4.5" stroke-dasharray="280" stroke-dashoffset="0" stroke-linecap="round"/>
-          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="8 4" opacity="0.8"/>
-          <!-- 耳 -->
-          <path d="M 24 35 Q 20 12 38 22 Q 40 23 42 25" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M 76 35 Q 80 12 62 22 Q 60 23 58 25" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- 輪郭 -->
-          <path d="M 24 35 C 18 55, 30 75, 50 75 C 70 75, 82 55, 76 35 C 74 31, 60 27, 50 27 C 40 27, 26 31, 24 35 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
-          <!-- 目 -->
-          <ellipse cx="38" cy="46" rx="3.5" ry="5" fill="currentColor"/>
-          <ellipse cx="62" cy="46" rx="3.5" ry="5" fill="currentColor"/>
-          <!-- 鼻と口 -->
-          <polygon points="50,54 47,51 53,51" fill="currentColor"/>
-          <path d="M 46 59 Q 50 62 50 56 Q 50 62 54 59" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <!-- ひげ -->
-          <line x1="20" y1="52" x2="10" y2="50" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <line x1="20" y1="58" x2="8" y2="60" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <line x1="80" y1="52" x2="90" y2="50" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <line x1="80" y1="58" x2="92" y2="60" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <!-- テキスト -->
-          <path id="catTextPath" d="M 18 84 A 36 36 0 0 0 82 84" fill="none" stroke="none"/>
-          <text font-size="10.5" font-weight="900" letter-spacing="1.5" fill="currentColor">
-            <textPath href="#catTextPath" startOffset="50%" text-anchor="middle">★ CAT STAMP ★</textPath>
-          </text>
-        </g>
-      `,
-      dog: `
-        <g class="stamp-ink">
-          <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
-          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="8 4" opacity="0.8"/>
-          <!-- 耳 -->
-          <path d="M 23 28 Q 14 36 18 52 Q 23 58 27 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M 77 28 Q 86 36 82 52 Q 77 58 73 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- 輪郭 -->
-          <path d="M 25 32 C 22 55, 32 73, 50 73 C 68 73, 78 55, 75 32 C 73 24, 60 22, 50 22 C 40 22, 27 24, 25 32 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
-          <!-- 目 -->
-          <circle cx="37" cy="42" r="4.5" fill="currentColor"/>
-          <circle cx="63" cy="42" r="4.5" fill="currentColor"/>
-          <!-- 鼻 -->
-          <path d="M 45 52 Q 50 48 55 52 Q 50 58 45 52 Z" fill="currentColor"/>
-          <!-- 口 -->
-          <path d="M 44 59 Q 50 63 50 56 Q 50 63 56 59" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-          <!-- まゆげ風模様 -->
-          <ellipse cx="37" cy="33" rx="4" ry="2" fill="currentColor" opacity="0.8"/>
-          <ellipse cx="63" cy="33" rx="4" ry="2" fill="currentColor" opacity="0.8"/>
-          <!-- テキスト -->
-          <path id="dogTextPath" d="M 18 84 A 36 36 0 0 0 82 84" fill="none" stroke="none"/>
-          <text font-size="10.5" font-weight="900" letter-spacing="1.5" fill="currentColor">
-            <textPath href="#dogTextPath" startOffset="50%" text-anchor="middle">★ DOG STAMP ★</textPath>
-          </text>
-        </g>
-      `,
-      rabbit: `
-        <g class="stamp-ink">
-          <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
-          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="8 4" opacity="0.8"/>
-          <!-- 長い耳 -->
-          <path d="M 30 35 Q 16 -1 32 10 Q 40 20 37 32" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M 70 35 Q 84 -1 68 10 Q 60 20 63 32" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- 輪郭 -->
-          <path d="M 28 38 C 24 55, 32 74, 50 74 C 68 74, 76 55, 72 38 C 70 30, 60 30, 50 30 C 40 30, 30 30, 28 38 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
-          <!-- 目 -->
-          <circle cx="38" cy="48" r="4" fill="currentColor"/>
-          <circle cx="62" cy="48" r="4" fill="currentColor"/>
-          <!-- 鼻 & 口 -->
-          <polygon points="50,54 47,51 53,51" fill="currentColor"/>
-          <path d="M 44 59 Q 50 63 50 55 Q 50 63 56 59" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <!-- ほっぺ -->
-          <circle cx="32" cy="56" r="3" fill="currentColor" opacity="0.6"/>
-          <circle cx="68" cy="56" r="3" fill="currentColor" opacity="0.6"/>
-          <!-- テキスト -->
-          <path id="rabbitTextPath" d="M 18 84 A 36 36 0 0 0 82 84" fill="none" stroke="none"/>
-          <text font-size="9" font-weight="900" letter-spacing="1.2" fill="currentColor">
-            <textPath href="#rabbitTextPath" startOffset="50%" text-anchor="middle">★ RABBIT STAMP ★</textPath>
-          </text>
-        </g>
-      `,
-      bear: `
-        <g class="stamp-ink">
-          <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
-          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="8 4" opacity="0.8"/>
-          <!-- 丸い耳 -->
-          <path d="M 26 31 C 12 21, 15 2, 33 14" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M 74 31 C 88 21, 85 2, 67 14" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- 輪郭 -->
-          <path d="M 26 36 C 20 54, 30 73, 50 73 C 70 73, 80 54, 74 36 C 72 30, 60 26, 50 26 C 40 26, 28 30, 26 36 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
-          <!-- 目 -->
-          <circle cx="38" cy="45" r="4.5" fill="currentColor"/>
-          <circle cx="62" cy="45" r="4.5" fill="currentColor"/>
-          <!-- 口もと（白いマズル部分風）の輪郭 -->
-          <ellipse cx="50" cy="57" rx="11" ry="8" fill="none" stroke="currentColor" stroke-width="2.5"/>
-          <!-- 鼻 -->
-          <path d="M 46 54 Q 50 50 54 54 Q 50 58 46 54 Z" fill="currentColor"/>
-          <!-- 口 -->
-          <path d="M 46 60 Q 50 63 50 57 Q 50 63 54 60" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          <!-- テキスト -->
-          <path id="bearTextPath" d="M 18 84 A 36 36 0 0 0 82 84" fill="none" stroke="none"/>
-          <text font-size="10.5" font-weight="900" letter-spacing="1.5" fill="currentColor">
-            <textPath href="#bearTextPath" startOffset="50%" text-anchor="middle">★ BEAR STAMP ★</textPath>
-          </text>
-        </g>
-      `
-    };
-
-    // --- 各種動物の別名マッピング ---
-    const KEYWORD_MAP = {
-      cat: ['cat', 'ねこ', '猫', 'ネコ', 'にゃー', 'ニャー'],
-      dog: ['dog', 'いぬ', '犬', 'イヌ', 'わんこ', 'ワンコ'],
-      rabbit: ['rabbit', 'うさぎ', 'ウサギ', '兎', 'うさちゃん'],
-      bear: ['bear', 'くま', 'クマ', '熊', 'ぷー']
-    };
-
-    // --- 状態管理 ---
-    const state = {
-      unlocked: {
-        cat: false,
-        dog: false,
-        rabbit: false,
-        bear: false
-      },
-      selectedStamp: null, // 'cat', 'dog', 'rabbit', 'bear'
-      selectedColor: '#E15243', // デフォルト朱色
-      stampSize: 80,
-      stampRotation: 0,
-      placedStamps: [], // 配置済みスタンプ一覧: { id, type, color, x, y, size, rotation }
-      selectedPlacedStampId: null, // 現在編集のために選択している配置済みスタンプのID
-      activeTheme: 'grid'
-    };
-
-    // --- セレクター ---
-    const elKeywordInput = document.getElementById('keyword-input');
-    const elUnlockBtn = document.getElementById('unlock-btn');
-    const elStampPalette = document.getElementById('stamp-palette');
-    const elUnlockedCount = document.getElementById('unlocked-count');
-    const elInkPalette = document.getElementById('ink-palette');
-    const elStampSize = document.getElementById('stamp-size');
-    const elSizeValue = document.getElementById('size-value');
-    const elStampRotation = document.getElementById('stamp-rotation');
-    const elRotationValue = document.getElementById('rotation-value');
-    const elStampSheet = document.getElementById('stamp-sheet');
-    const elStampLayer = document.getElementById('stamp-layer');
-    const elParticleLayer = document.getElementById('particle-layer');
-    const elBgSelector = document.getElementById('bg-selector');
-    const elClearBtn = document.getElementById('clear-btn');
-    const elSaveBtn = document.getElementById('save-btn');
-    const elSheetDecorations = document.getElementById('sheet-decorations');
-    const elEditOverlay = document.getElementById('edit-overlay');
-    const elStampDeleteBtn = document.getElementById('stamp-delete-btn');
-    const elStampRotateHandle = document.getElementById('stamp-rotate-handle');
-
-    // --- ユーティリティ ---
-    const showToast = (message, icon = "✨") => {
-      const toast = document.getElementById('toast');
-      document.getElementById('toast-message').textContent = message;
-      document.getElementById('toast-icon').textContent = icon;
-      toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
-      toast.classList.add('opacity-100', 'translate-y-0');
-      
-      setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
-        toast.classList.remove('opacity-100', 'translate-y-0');
-      }, 3000);
-    };
-
-    // --- 初期化処理 ---
-    const init = () => {
-      // 登録済みの Lucide アイコンをレンダリング
-      lucide.createIcons();
-      
-      // カラーボタンの初期状態設定
-      updateInkSelection();
-      
-      // スタンプ一覧を空で初期描画
-      renderStampPalette();
-
-      // イベントリスナーの紐付け
-      elUnlockBtn.addEventListener('click', handleUnlock);
-      elKeywordInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleUnlock();
-      });
-
-      // インク色変更
-      document.querySelectorAll('.color-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const color = e.currentTarget.getAttribute('data-color');
-          state.selectedColor = color;
-          updateInkSelection();
-          
-          // 既存スタンプを選択中の場合は、色を変更できるようにする
-          if (state.selectedPlacedStampId !== null) {
-            const stamp = state.placedStamps.find(s => s.id === state.selectedPlacedStampId);
-            if (stamp) {
-              stamp.color = color;
-              renderPlacedStamps();
-              updateEditOverlayPosition();
-            }
-          }
-        });
-      });
-
-      // スライダー変更
-      elStampSize.addEventListener('input', (e) => {
-        const val = parseInt(e.target.value);
-        state.stampSize = val;
-        elSizeValue.textContent = `${val}px`;
-        
-        // 選択中スタンプがあればサイズをリアルタイム更新
-        if (state.selectedPlacedStampId !== null) {
-          const stamp = state.placedStamps.find(s => s.id === state.selectedPlacedStampId);
-          if (stamp) {
-            stamp.size = val;
-            renderPlacedStamps();
-            updateEditOverlayPosition();
-          }
-        }
-      });
-
-      elStampRotation.addEventListener('input', (e) => {
-        const val = parseInt(e.target.value);
-        state.stampRotation = val;
-        elRotationValue.textContent = `${val}°`;
-        
-        // 選択中スタンプがあれば角度をリアルタイム更新
-        if (state.selectedPlacedStampId !== null) {
-          const stamp = state.placedStamps.find(s => s.id === state.selectedPlacedStampId);
-          if (stamp) {
-            stamp.rotation = val;
-            renderPlacedStamps();
-            updateEditOverlayPosition();
-          }
-        }
-      });
-
-      // 台紙クリック（スタンプ押印・選択解除）
-      elStampSheet.addEventListener('mousedown', handleSheetClick);
-      elStampSheet.addEventListener('touchstart', handleSheetClick, { passive: false });
-
-      // 背景変更
-      elBgSelector.addEventListener('change', (e) => {
-        changeTheme(e.target.value);
-      });
-
-      // クリアボタン
-      elClearBtn.addEventListener('click', () => {
-        if (state.placedStamps.length === 0) return;
-        if (confirm("スタンプをすべて消去します。よろしいですか？")) {
-          state.placedStamps = [];
-          deselectPlacedStamp();
-          renderPlacedStamps();
-          showToast("台紙をきれいにしました", "🧹");
-        }
-      });
-
-      // 保存ボタン
-      elSaveBtn.addEventListener('click', saveAsImage);
-
-      // 編集用オーバーレイの操作
-      elStampDeleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteSelectedStamp();
-      });
-
-      // ハンドルによる回転/スケール操作（ドラッグ処理）
-      setupRotateHandleDrag();
-      
-      // タップ時など台紙外クリックで選択解除
-      document.addEventListener('mousedown', (e) => {
-        if (!elStampSheet.contains(e.target) && !document.getElementById('edit-overlay').contains(e.target) && !document.querySelector('.color-btn').contains(e.target) && e.target.id !== 'stamp-size' && e.target.id !== 'stamp-rotation') {
-          deselectPlacedStamp();
-        }
-      });
-    };
-
-    // --- テーマ（台紙背景）切り替え ---
-    const changeTheme = (themeName) => {
-      state.activeTheme = themeName;
-      elStampSheet.className = "paper-texture w-full aspect-[4/3] rounded-2xl shadow-inner relative overflow-hidden transition-all duration-300";
-      
-      let decorationsHtml = '';
-
-      if (themeName === 'grid') {
-        decorationsHtml = `
-          <div class="w-full h-full flex flex-col justify-between" id="grid-stamp-card">
-            <div class="text-center py-2">
-              <h2 class="text-xl font-bold tracking-widest text-amber-800/80 cute-title">ANIMAL STAMP RALLY</h2>
-              <div class="w-32 h-0.5 bg-amber-800/40 mx-auto mt-1"></div>
-            </div>
-            <div class="grid grid-cols-4 gap-4 my-auto px-4">
-              <div class="aspect-square rounded-full border-4 border-dashed border-amber-800/20 flex items-center justify-center text-amber-800/20 font-bold text-lg">1</div>
-              <div class="aspect-square rounded-full border-4 border-dashed border-amber-800/20 flex items-center justify-center text-amber-800/20 font-bold text-lg">2</div>
-              <div class="aspect-square rounded-full border-4 border-dashed border-amber-800/20 flex items-center justify-center text-amber-800/20 font-bold text-lg">3</div>
-              <div class="aspect-square rounded-full border-4 border-dashed border-amber-800/20 flex items-center justify-center text-amber-800/20 font-bold text-lg">4</div>
-            </div>
-            <div class="text-center text-[10px] text-amber-800/40">スタンプを4つきれいに並べて押してみよう！</div>
-          </div>
-        `;
-      } else if (themeName === 'notebook') {
-        // ノート横線風
-        elStampSheet.classList.add('bg-amber-50/20');
-        decorationsHtml = `
-          <div class="w-full h-full flex flex-col justify-between py-4 px-6 opacity-30">
-            <div class="border-b-2 border-amber-900/30 w-full h-8"></div>
-            <div class="border-b-2 border-amber-900/30 w-full h-8"></div>
-            <div class="border-b-2 border-amber-900/30 w-full h-8"></div>
-            <div class="border-b-2 border-amber-900/30 w-full h-8"></div>
-            <div class="border-b-2 border-amber-900/30 w-full h-8"></div>
-            <div class="border-b-2 border-amber-900/30 w-full h-8"></div>
-            <div class="border-b-2 border-amber-900/30 w-full h-8"></div>
-            <div class="border-b-2 border-amber-900/30 w-full h-8"></div>
-          </div>
-        `;
-      } else if (themeName === 'nature') {
-        // 森のグリーン風
-        elStampSheet.style.backgroundColor = '#E8F8F5';
-        decorationsHtml = `
-          <div class="w-full h-full flex flex-col justify-between p-4 pointer-events-none">
-            <div class="flex justify-between">
-              <span class="text-2xl opacity-40">🌲</span>
-              <span class="text-2xl opacity-40">🌳</span>
-            </div>
-            <div class="text-center">
-              <span class="text-amber-800/60 font-bold tracking-widest text-sm cute-title">✨ FOREST NOTEBOOK ✨</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-2xl opacity-40">🍀</span>
-              <span class="text-2xl opacity-40">🍄</span>
-            </div>
-          </div>
-        `;
-      } else if (themeName === 'wood') {
-        // 机の上風
-        elStampSheet.style.backgroundColor = '#f4e3cf';
-        decorationsHtml = `
-          <div class="w-full h-full flex flex-col justify-between p-4 opacity-15">
-            <div class="border-b border-amber-950 w-full"></div>
-            <div class="border-b border-amber-950 w-full"></div>
-            <div class="border-b border-amber-950 w-full"></div>
-            <div class="border-b border-amber-950 w-full"></div>
-          </div>
-        `;
-      }
-
-      elSheetDecorations.innerHTML = decorationsHtml;
-    };
-
-    // --- インク選択UI反映 ---
-    const updateInkSelection = () => {
-      document.querySelectorAll('.color-btn').forEach(btn => {
-        const color = btn.getAttribute('data-color');
-        const indicator = btn.querySelector('span');
-        if (color === state.selectedColor) {
-          btn.classList.add('ring-4', 'ring-amber-400');
-          indicator.classList.remove('hidden');
-        } else {
-          btn.classList.remove('ring-4', 'ring-amber-400');
-          indicator.classList.add('hidden');
-        }
-      });
-    };
-
-    // --- スタンプパレット更新 ---
-    const renderStampPalette = () => {
-      const unlockedKeys = Object.keys(state.unlocked).filter(k => state.unlocked[k]);
-      elUnlockedCount.textContent = `${unlockedKeys.length} / 4`;
-
-      // ヒントの背景色・境界線変化
-      Object.keys(state.unlocked).forEach(key => {
-        const elHint = document.getElementById(`hint-${key}`);
-        if (state.unlocked[key]) {
-          elHint.className = "text-xs p-1.5 rounded-lg border bg-amber-100 border-amber-300 text-amber-800 font-bold shadow-sm scale-105 transition-all";
-        } else {
-          elHint.className = "text-xs p-1.5 rounded-lg border bg-slate-50 border-slate-200 text-slate-400 font-semibold transition-all";
-        }
-      });
-
-      if (unlockedKeys.length === 0) {
-        elStampPalette.innerHTML = `
-          <div class="col-span-4 py-6 text-center text-xs text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
-            キーワードを入力してスタンプを開放してね！
-          </div>
-        `;
-        return;
-      }
-
-      elStampPalette.innerHTML = '';
-      unlockedKeys.forEach(key => {
-        const isActive = state.selectedStamp === key;
-        const btn = document.createElement('button');
-        btn.className = `aspect-square rounded-xl border-2 flex flex-col items-center justify-center p-2 transition-all active:scale-95 relative group overflow-hidden ${
-          isActive 
-            ? 'border-amber-500 bg-amber-50/50 ring-2 ring-amber-300 shadow-md' 
-            : 'border-slate-200 bg-white hover:border-amber-300 hover:bg-amber-50/10'
-        }`;
-        
-        // ミニプレビュー
-        btn.innerHTML = `
-          <svg viewBox="0 0 100 100" class="w-12 h-12 text-slate-700 group-hover:text-amber-700 transition-colors">
-            ${STAMP_SVGS[key]}
-          </svg>
-          <span class="text-[10px] font-bold mt-1 text-slate-500 group-hover:text-amber-800">${key.toUpperCase()}</span>
-        `;
-
-        btn.addEventListener('click', () => {
-          selectStamp(key);
-        });
-
-        elStampPalette.appendChild(btn);
-      });
-    };
-
-    // --- スタンプ選定 ---
-    const selectStamp = (stampKey) => {
-      state.selectedStamp = stampKey;
-      deselectPlacedStamp(); // 配置済みスタンプの編集選択は解除
-      renderStampPalette();
-      
-      // スライダーを標準値にリセット
-      state.stampSize = 80;
-      state.stampRotation = 0;
-      elStampSize.value = 80;
-      elSizeValue.textContent = "80px";
-      elStampRotation.value = 0;
-      elRotationValue.textContent = "0°";
-
-      showToast(`${stampKey.toUpperCase()} スタンプを選択しました！台紙を押してね！`, "🐾");
-    };
-
-    // --- キーワード照合・アンロック ---
-    const handleUnlock = () => {
-      const inputVal = elKeywordInput.value.trim().toLowerCase();
-      if (!inputVal) return;
-
-      let foundKey = null;
-      for (const [key, list] of Object.entries(KEYWORD_MAP)) {
-        if (list.includes(inputVal)) {
-          foundKey = key;
-          break;
-        }
-      }
-
-      if (foundKey) {
-        if (state.unlocked[foundKey]) {
-          showToast(`「${inputVal}」はすでにアンロックされています！`, "🌟");
-        } else {
-          state.unlocked[foundKey] = true;
-          playUnlockSound();
-          createUnlockConfetti();
-          selectStamp(foundKey); // 自動で選択状態にする
-          elKeywordInput.value = '';
-          showToast(`おめでとう！「${foundKey.toUpperCase()}」スタンプをゲットしたよ！`, "🎉");
+    // 1. 初期化
+    function init() {
+      // データのロード (なければデフォルト)
+      //const saved = localStorage.getItem('bingo_3x3_data_v2');
+      const saved = sessionStorage.getItem('bingo_3x3_data_v2');
+      if (saved) {
+        try {
+          bingoData = JSON.parse(saved);
+        } catch(e) {
+          resetData();
         }
       } else {
-        showToast("キーワードが違うみたい... ヒントをみてね！", "❓");
+        resetData();
       }
-    };
 
-    // --- アンロック時のパーティクル（お祝い） ---
-    const createUnlockConfetti = () => {
-      for (let i = 0; i < 30; i++) {
-        const conf = document.createElement('div');
-        conf.className = 'absolute pointer-events-none z-50 rounded-full';
-        const colors = ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#ec4899'];
-        const size = Math.random() * 8 + 4;
-        conf.style.width = `${size}px`;
-        conf.style.height = `${size}px`;
-        conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        conf.style.left = `${Math.random() * 100}%`;
-        conf.style.top = '100%';
-        
-        elParticleLayer.appendChild(conf);
+      renderGrid();
+      checkBingo(false); // 初期化時は演出なしでビンゴ状態確認
+    }
 
-        const angle = Math.random() * Math.PI - Math.PI / 2; // 上方向ランダム
-        const speed = Math.random() * 10 + 5;
-        let vx = Math.sin(angle) * speed;
-        let vy = -Math.cos(angle) * speed - 10;
-        let px = parseFloat(conf.style.left) * (elParticleLayer.clientWidth / 100);
-        let py = elParticleLayer.clientHeight;
+    // データリセット
+    function resetData() {
+      // ローカルストレージからキーごと完全に削除する
+      //localStorage.removeItem('bingo_3x3_data_v2');
 
-        const anim = () => {
-          vy += 0.5; // 重力
-          px += vx;
-          py += vy;
-          conf.style.left = `${px}px`;
-          conf.style.top = `${py}px`;
+      bingoData = defaultWords.map((item, index) => ({
+        id: index,
+        word: item.word,
+        imageUrl: item.imageUrl,
+        stamped: false
+      }));
+      saveData();
+    }
 
-          if (py < elParticleLayer.clientHeight + 20) {
-            requestAnimationFrame(anim);
+    // データ保存
+    function saveData() {
+      //localStorage.setItem('bingo_3x3_data_v2', JSON.stringify(bingoData));
+      sessionStorage.setItem('bingo_3x3_data_v2', JSON.stringify(bingoData));
+    }
+
+    // 2. グリッドの描画
+    function renderGrid() {
+      gridContainer.innerHTML = '';
+      
+      bingoData.forEach((cell, idx) => {
+        const cellEl = document.createElement('div');
+        // セルの基本スタイル
+        cellEl.className = `relative flex flex-col items-center justify-between p-2 rounded-2xl border-2 transition-all duration-300 text-center overflow-hidden h-full aspect-square shadow-sm select-none cursor-default
+          ${cell.stamped 
+            ? 'bg-amber-100 border-amber-400' 
+            : 'bg-stone-100 border-stone-200'}`;
+
+        if (isEditing) {
+          // 編集モード：言葉の設定と画像アップロード用UI
+          cellEl.className += ' bg-amber-50/50 border-dashed border-amber-300 p-1.5 justify-around';
+          
+          // 言葉入力
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = cell.word;
+          input.placeholder = '言葉を入力';
+          input.className = 'w-full text-center bg-white rounded border border-amber-300 focus:outline-none font-bold text-xs text-amber-900 p-1';
+          input.addEventListener('change', (e) => {
+            bingoData[idx].word = e.target.value.trim();
+            saveData();
+          });
+          cellEl.appendChild(input);
+
+          // 画像のプレビューまたはアップロードボタン
+          const imageControl = document.createElement('div');
+          imageControl.className = 'w-full flex flex-col items-center gap-1';
+
+          const fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.accept = 'image/*';
+          fileInput.id = `file-${idx}`;
+          fileInput.className = 'hidden';
+          
+          // ファイルが選ばれたときの圧縮・Base64変換
+          fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              resizeAndProcessImage(file, (base64Str) => {
+                bingoData[idx].imageUrl = base64Str;
+                saveData();
+                renderGrid(); // 再描画してプレビューを反映
+              });
+            }
+          });
+
+          const uploadBtn = document.createElement('label');
+          uploadBtn.htmlFor = `file-${idx}`;
+          uploadBtn.className = 'cursor-pointer text-[10px] bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold px-2 py-1 rounded shadow-sm transition flex items-center gap-1';
+          
+          if (cell.imageUrl) {
+            uploadBtn.innerHTML = `<i class="fa-solid fa-image"></i> 変更`;
           } else {
-            conf.remove();
+            uploadBtn.innerHTML = `<i class="fa-solid fa-plus"></i> 画像追加`;
           }
-        };
-        requestAnimationFrame(anim);
-      }
-    };
 
-    // --- 台紙クリック・タップ時の処理（スタンプを押す / 選択する） ---
-    const handleSheetClick = (e) => {
-      // タップかマウスクリックか
-      const eventObj = e.touches ? e.touches[0] : e;
-      const rect = elStampSheet.getBoundingClientRect();
-      const x = eventObj.clientX - rect.left;
-      const y = eventObj.clientY - rect.top;
+          imageControl.appendChild(fileInput);
+          imageControl.appendChild(uploadBtn);
 
-      // 1. すでに置かれたスタンプがクリックされたか判定
-      const clickedStamp = findClickedStamp(x, y);
-      if (clickedStamp) {
-        e.preventDefault();
-        selectPlacedStamp(clickedStamp);
-        return;
-      }
+          // プレビュー表示（ある場合のみ）
+          if (cell.imageUrl) {
+            const previewImg = document.createElement('img');
+            previewImg.src = cell.imageUrl;
+            previewImg.className = 'w-8 h-8 object-cover rounded-md border border-amber-300 shadow-sm';
+            imageControl.appendChild(previewImg);
+          }
 
-      // 2. スタンプが選択されていない場合は何もしない（または選択解除）
-      if (!state.selectedStamp) {
-        deselectPlacedStamp();
-        return;
-      }
+          cellEl.appendChild(imageControl);
 
-      e.preventDefault();
-      // 3. スタンプを新規配置
-      const newStamp = {
-        id: 'stamp_' + Date.now() + '_' + Math.floor(Math.random()*1000),
-        type: state.selectedStamp,
-        color: state.selectedColor,
-        x: x,
-        y: y,
-        size: state.stampSize,
-        rotation: state.stampRotation
-      };
+        } else {
+          // 通常プレイモード
+          const textEl = document.createElement('span');
+          
+          if (cell.stamped) {
+            // スタンプ（画像）が公開された状態：
+            // ワード名を下部に少し重ねる、または表示するため、文字サイズを小さく調整
+            textEl.className = 'font-bold text-xs md:text-sm text-amber-900 bg-amber-200/90 py-0.5 px-2 rounded-full absolute bottom-1.5 z-20 shadow-sm break-all max-w-[90%]';
+            textEl.textContent = cell.word || '(空欄)';
+          } else {
+            // 未オープンの状態：中央に大きく「？」
+            textEl.className = 'font-black text-2xl md:text-3xl text-stone-400/80 tracking-widest my-auto';
+            textEl.innerHTML = `<i class="fa-solid fa-question"></i>`;
+          }
+          cellEl.appendChild(textEl);
 
-      state.placedStamps.push(newStamp);
-      playStampSound();
-      createStampParticles(x, y, state.selectedColor);
-      renderPlacedStamps();
-      
-      // 押したスタンプを編集可能状態にする
-      selectPlacedStamp(newStamp);
-    };
+          // マス専用画像 (オープン時のみポンとアニメーション付きで表示)
+          if (cell.stamped) {
+            const stamp = document.createElement('div');
+            stamp.className = 'absolute inset-0 flex items-center justify-center pointer-events-none stamp-active p-1.5 z-10';
+            
+            const imgEl = document.createElement('img');
+            imgEl.src = cell.imageUrl || '';
+            imgEl.className = 'w-full h-full object-cover rounded-xl border-4 border-amber-400 shadow-md bg-white';
+            
+            // 画像読み込みエラー時のフォールバック (かわいいスタンプマーク)
+            imgEl.onerror = () => {
+              imgEl.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f43f5e" rx="15"/><text x="50" y="55" font-size="20" fill="white" font-weight="bold" text-anchor="middle">CLEAR!</text></svg>`;
+            };
 
-    // クリック位置に最も近い配置済みスタンプを取得
-    const findClickedStamp = (clickX, clickY) => {
-      // 逆順（手前のスタンプから）に調べる
-      for (let i = state.placedStamps.length - 1; i >= 0; i--) {
-        const stamp = state.placedStamps[i];
-        const dist = Math.hypot(stamp.x - clickX, stamp.y - clickY);
-        // スタンプの半径（size/2）の範囲内であればクリック判定
-        if (dist <= stamp.size / 2) {
-          return stamp;
+            stamp.appendChild(imgEl);
+            cellEl.appendChild(stamp);
+          }
         }
+
+        gridContainer.appendChild(cellEl);
+      });
+    }
+
+    // 画像ファイルを200x200pxに圧縮し、容量を小さくしてBase64で出力するヘルパー
+    function resizeAndProcessImage(file, callback) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const max_size = 200; // 200x200pxにリサイズ
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > max_size) {
+              height *= max_size / width;
+              width = max_size;
+            }
+          } else {
+            if (height > max_size) {
+              width *= max_size / height;
+              height = max_size;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('200px');
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85); // 画質85%で圧縮
+          callback(dataUrl);
+        }
+        img.src = event.target.result;
       }
-      return null;
-    };
+      reader.readAsDataURL(file);
+    }
 
-    // 配置済みスタンプを選択
-    const selectPlacedStamp = (stamp) => {
-      state.selectedPlacedStampId = stamp.id;
-      
-      // パネル側の値を同期
-      state.stampSize = stamp.size;
-      state.stampRotation = stamp.rotation;
-      state.selectedColor = stamp.color;
-      
-      elStampSize.value = stamp.size;
-      elSizeValue.textContent = `${stamp.size}px`;
-      elStampRotation.value = stamp.rotation;
-      elRotationValue.textContent = `${stamp.rotation}°`;
-      
-      updateInkSelection();
-      updateEditOverlayPosition();
-    };
+    // 3. メッセージ表示
+    function showAlert(message, duration = 3000) {
+      alertBox.textContent = message;
+      alertBox.classList.remove('hidden');
+      setTimeout(() => {
+        alertBox.classList.add('hidden');
+      }, duration);
+    }
 
-    // 配置済みスタンプの選択解除
-    const deselectPlacedStamp = () => {
-      state.selectedPlacedStampId = null;
-      elEditOverlay.classList.add('hidden');
-    };
-
-    // 削除処理
-    const deleteSelectedStamp = () => {
-      if (state.selectedPlacedStampId !== null) {
-        state.placedStamps = state.placedStamps.filter(s => s.id !== state.selectedPlacedStampId);
-        deselectPlacedStamp();
-        renderPlacedStamps();
-        showToast("スタンプを削除しました", "🗑️");
-      }
-    };
-
-    // 編集用オーバーレイ（破線枠・回転削除ボタン）の位置更新
-    const updateEditOverlayPosition = () => {
-      if (state.selectedPlacedStampId === null) {
-        elEditOverlay.classList.add('hidden');
+    // 4. ワード検索によるスタンプ処理
+    function applyStampByWord() {
+      if (isEditing) {
+        showAlert('⚠️ 編集モードを終了してから回答を入力してください。');
         return;
       }
 
-      const stamp = state.placedStamps.find(s => s.id === state.selectedPlacedStampId);
-      if (!stamp) {
-        deselectPlacedStamp();
+      const inputWord = searchWordInput.value.trim();
+      if (!inputWord) {
+        showAlert('⚠️ 言葉を入力してください。');
         return;
       }
 
-      elEditOverlay.classList.remove('hidden');
-      elEditOverlay.style.width = `${stamp.size + 16}px`;
-      elEditOverlay.style.height = `${stamp.size + 16}px`;
-      elEditOverlay.style.left = `${stamp.x - (stamp.size + 16)/2}px`;
-      elEditOverlay.style.top = `${stamp.y - (stamp.size + 16)/2}px`;
-      // 回転も同期させる
-      elEditOverlay.style.transform = `rotate(${stamp.rotation}deg)`;
-    };
-
-    // --- スタンプ描画処理 ---
-    const renderPlacedStamps = () => {
-      elStampLayer.innerHTML = '';
-      
-      state.placedStamps.forEach(stamp => {
-        const stampContainer = document.createElement('div');
-        stampContainer.className = "absolute stamp-element cursor-pointer";
-        stampContainer.style.width = `${stamp.size}px`;
-        stampContainer.style.height = `${stamp.size}px`;
-        // 中心の位置合わせ
-        stampContainer.style.left = `${stamp.x - stamp.size/2}px`;
-        stampContainer.style.top = `${stamp.y - stamp.size/2}px`;
-        stampContainer.style.transform = `rotate(${stamp.rotation}deg)`;
-        stampContainer.style.color = stamp.color;
-        stampContainer.setAttribute('data-id', stamp.id);
-
-        // スタンプのかすれ（テクスチャ）用のSVGマスクやブレンドを適用
-        // わずかにランダムな回転、かすれを追加して本物のアナログ感を演出
-        const svgContent = `
-          <svg viewBox="0 0 100 100" class="w-full h-full filter drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]">
-            ${STAMP_SVGS[stamp.type]}
-          </svg>
-        `;
-        stampContainer.innerHTML = svgContent;
-
-        // ドラッグ移動処理の実装
-        setupStampDrag(stampContainer, stamp);
-
-        elStampLayer.appendChild(stampContainer);
+      // 一致するマスを探す
+      const targetIndices = [];
+      bingoData.forEach((cell, idx) => {
+        if (!cell.stamped && cell.word && cell.word.toLowerCase() === inputWord.toLowerCase()) {
+          targetIndices.push(idx);
+        }
       });
 
-      updateEditOverlayPosition();
-    };
-
-    // --- スタンプドラッグ移動処理 ---
-    const setupStampDrag = (element, stamp) => {
-      let isDragging = false;
-      let startX, startY;
-      let stampStartX, stampStartY;
-
-      const onStart = (e) => {
-        // 回転ハンドルなどを触っているときはスキップ
-        if (e.target.closest('#edit-overlay')) return;
-
-        isDragging = true;
-        const eventObj = e.touches ? e.touches[0] : e;
-        startX = eventObj.clientX;
-        startY = eventObj.clientY;
-        stampStartX = stamp.x;
-        stampStartY = stamp.y;
-
-        selectPlacedStamp(stamp);
-        
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onEnd);
-        document.addEventListener('touchmove', onMove, { passive: false });
-        document.addEventListener('touchend', onEnd);
-      };
-
-      const onMove = (e) => {
-        if (!isDragging) return;
-        e.preventDefault();
-        const eventObj = e.touches ? e.touches[0] : e;
-        const dx = eventObj.clientX - startX;
-        const dy = eventObj.clientY - startY;
-
-        // 台紙の境界内制限
-        const rect = elStampSheet.getBoundingClientRect();
-        let newX = stampStartX + dx;
-        let newY = stampStartY + dy;
-
-        // 範囲を一定程度に収める
-        newX = Math.max(0, Math.min(rect.width, newX));
-        newY = Math.max(0, Math.min(rect.height, newY));
-
-        stamp.x = newX;
-        stamp.y = newY;
-
-        element.style.left = `${newX - stamp.size/2}px`;
-        element.style.top = `${newY - stamp.size/2}px`;
-        updateEditOverlayPosition();
-      };
-
-      const onEnd = () => {
-        isDragging = false;
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onEnd);
-        document.removeEventListener('touchmove', onMove);
-        document.removeEventListener('touchend', onEnd);
-      };
-
-      element.addEventListener('mousedown', onStart);
-      element.addEventListener('touchstart', onStart, { passive: false });
-    };
-
-    // --- 回転ハンドルのドラッグ処理 ---
-    const setupRotateHandleDrag = () => {
-      let isRotating = false;
-      let centerX, centerY;
-
-      const onStart = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        
-        const stamp = state.placedStamps.find(s => s.id === state.selectedPlacedStampId);
-        if (!stamp) return;
-
-        const rect = elStampSheet.getBoundingClientRect();
-        centerX = rect.left + stamp.x;
-        centerY = rect.top + stamp.y;
-
-        isRotating = true;
-        
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onEnd);
-        document.addEventListener('touchmove', onMove, { passive: false });
-        document.addEventListener('touchend', onEnd);
-      };
-
-      const onMove = (e) => {
-        if (!isRotating) return;
-        e.preventDefault();
-        const eventObj = e.touches ? e.touches[0] : e;
-        
-        const dx = eventObj.clientX - centerX;
-        const dy = eventObj.clientY - centerY;
-        
-        // 角度算出 (アークタンジェント)
-        let angle = Math.atan2(dy, dx) * (180 / Math.PI) - 90; // 上端(90deg下)を基準に調整
-        angle = Math.round(angle);
-
-        const stamp = state.placedStamps.find(s => s.id === state.selectedPlacedStampId);
-        if (stamp) {
-          stamp.rotation = angle;
-          elStampRotation.value = angle;
-          elRotationValue.textContent = `${angle}°`;
-          renderPlacedStamps();
+      if (targetIndices.length > 0) {
+        targetIndices.forEach(idx => {
+          bingoData[idx].stamped = true;
+        });
+        saveData();
+        renderGrid();
+        showAlert(`🎉 正解！「${inputWord}」がオープンされました！`);
+        searchWordInput.value = '';
+        checkBingo(true); // ビンゴ判定（演出あり）
+      } else {
+        const alreadyStamped = bingoData.some(cell => cell.word && cell.word.toLowerCase() === inputWord.toLowerCase() && cell.stamped);
+        if (alreadyStamped) {
+          showAlert(`💡 「${inputWord}」はすでにオープンされています。`);
+        } else {
+          showAlert(`❌ 「${inputWord}」はカードに隠されていません。別な言葉を試そう！`);
         }
-      };
-
-      const onEnd = () => {
-        isRotating = false;
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onEnd);
-        document.removeEventListener('touchmove', onMove);
-        document.removeEventListener('touchend', onEnd);
-      };
-
-      elStampRotateHandle.addEventListener('mousedown', onStart);
-      elStampRotateHandle.addEventListener('touchstart', onStart, { passive: false });
-    };
-
-    // --- スタンプ押印時のパーティクル演出 ---
-    const createStampParticles = (x, y, color) => {
-      for (let i = 0; i < 12; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'absolute pointer-events-none rounded-full';
-        const size = Math.random() * 5 + 3;
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.backgroundColor = color;
-        particle.style.left = `${x}px`;
-        particle.style.top = `${y}px`;
-        particle.style.opacity = '0.8';
-        elParticleLayer.appendChild(particle);
-
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 3 + 2;
-        const vx = Math.cos(angle) * speed;
-        const vy = Math.sin(angle) * speed;
-        let px = x;
-        let py = y;
-        let opacity = 0.8;
-
-        const anim = () => {
-          px += vx;
-          py += vy;
-          opacity -= 0.03;
-          particle.style.left = `${px}px`;
-          particle.style.top = `${py}px`;
-          particle.style.opacity = opacity;
-
-          if (opacity > 0) {
-            requestAnimationFrame(anim);
-          } else {
-            particle.remove();
-          }
-        };
-        requestAnimationFrame(anim);
       }
-    };
+    }
 
-    // --- html2canvasを使用した台紙の画像保存機能 ---
-    const saveAsImage = () => {
-      if (state.placedStamps.length === 0) {
-        showToast("スタンプを1つ以上押してから保存してね！", "📸");
+    // 5. ビンゴ判定
+    const lines = [
+      [0, 1, 2], // 横1
+      [3, 4, 5], // 横2
+      [6, 7, 8], // 横3
+      [0, 3, 6], // 縦1
+      [1, 4, 7], // 縦2
+      [2, 5, 8], // 縦3
+      [0, 4, 8], // 斜め(左上-右下)
+      [2, 4, 6]  // 斜め(右上-左下)
+    ];
+
+    function checkBingo(triggerCelebration) {
+      let activeLines = [];
+
+      lines.forEach((line, index) => {
+        const isCompleted = line.every(idx => bingoData[idx].stamped);
+        if (isCompleted) {
+          activeLines.push(index);
+        }
+      });
+
+      // 新しくビンゴが発生した時だけモーダルを出す
+      if (triggerCelebration && activeLines.length > 0) {
+        const lastBingoCount = parseInt(sessionStorage.getItem('last_bingo_count') || '0');
+        if (activeLines.length > lastBingoCount) {
+          setTimeout(() => {
+            bingoModal.classList.remove('hidden');
+          }, 600);
+        }
+      }
+      sessionStorage.setItem('last_bingo_count', activeLines.length.toString());
+    }
+
+    // 6. カードを画像として保存
+    function saveCardAsImage() {
+      if (isEditing) {
+        showAlert('⚠️ 編集モードを終了してから保存してください。');
         return;
       }
 
-      // 編集オーバーレイを一時的に隠して保存
-      const originalOverlayDisplay = elEditOverlay.style.display;
-      elEditOverlay.style.display = 'none';
+      showAlert('📸 画像を生成中...');
 
-      showToast("画像を生成中...", "🎨");
+      // html2canvasでビンゴカード部分をレンダリングしてダウンロード
+      html2canvas(bingoCard, {
+        scale: 3, // 高画質エクスポート
+        backgroundColor: '#fdf6e2', // カードの元の背景色
+        useCORS: true,
+        logging: false
+      }).then(canvas => {
+        try {
+          const link = document.createElement('a');
+          link.download = 'secret-bingo-card.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          showAlert('🎉 画像のダウンロードを開始しました！');
+        } catch (err) {
+          console.error(err);
+          showAlert('❌ 画像の保存に失敗しました。');
+        }
+      }).catch(err => {
+        console.error(err);
+        showAlert('❌ 画像の生成中にエラーが発生しました。');
+      });
+    }
 
-      // 少し遅延させて、レイアウトの確実なレンダリングを待つ
-      setTimeout(() => {
-        html2canvas(elStampSheet, {
-          backgroundColor: null,
-          useCORS: true,
-          scale: 2 // 高解像度で保存
-        }).then(canvas => {
-          // 復元
-          elEditOverlay.style.display = originalOverlayDisplay;
+    // 7. イベントリスナー
+    btnStamp.addEventListener('click', applyStampByWord);
+    searchWordInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        applyStampByWord();
+      }
+    });
 
-          // 画像のダウンロード
-          try {
-            const link = document.createElement('a');
-            link.download = `my-animal-stamp-sheet-${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            showToast("台紙を画像として保存しました！", "💾");
-          } catch (e) {
-            showToast("保存に失敗しました。もう一度試してください", "❌");
-          }
-        });
-      }, 300);
-    };
+    // 画像として保存
+    btnSaveImage.addEventListener('click', saveCardAsImage);
 
-    // 起動
-    window.onload = init;
+    // 編集モード切り替え
+    btnEdit.addEventListener('click', () => {
+      isEditing = !isEditing;
+      if (isEditing) {
+        editText.textContent = '編集を保存して隠す';
+        btnEdit.classList.remove('text-slate-500', 'hover:text-amber-600');
+        btnEdit.classList.add('text-emerald-600', 'hover:text-emerald-700', 'bg-emerald-50');
+        showAlert('📝 隠されたマスの答えと画像を変更・確認できます！');
+      } else {
+        editText.textContent = 'カードを編集する';
+        btnEdit.classList.remove('text-emerald-600', 'hover:text-emerald-700', 'bg-emerald-50');
+        btnEdit.classList.add('text-slate-500', 'hover:text-amber-600');
+        showAlert('💾 答えの編集内容を保存し、再び隠しました。');
+      }
+      renderGrid();
+      checkBingo(false);
+    });
+
+    // 全リセット
+    btnReset.addEventListener('click', () => {
+      if (confirm('ビンゴカードの状態と、マスの中身を初期化します。よろしいですか？')) {
+        resetData();
+        isEditing = false;
+        editText.textContent = 'カードを編集する';
+        btnEdit.className = 'text-sm font-semibold text-slate-500 hover:text-amber-600 flex items-center gap-1 transition px-3 py-2 rounded-lg hover:bg-amber-50';
+        searchWordInput.value = '';
+        sessionStorage.setItem('last_bingo_count', '0');
+        renderGrid();
+        checkBingo(false);
+        showAlert('🔄 カードを初期状態（隠された状態）にリセットしました。');
+      }
+    });
+
+    // モーダルを閉じる
+    btnCloseModal.addEventListener('click', () => {
+      bingoModal.classList.add('hidden');
+    });
+
+    // アプリスタート
+    init();
   </script>
 </body>
 </html>
