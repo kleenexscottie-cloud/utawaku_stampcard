@@ -78,10 +78,10 @@
         <label for="searchWord" class="text-sm font-bold text-amber-700 flex items-center gap-1">
           <i class="fa-solid fa-key"></i> 隠された言葉を入力：
         </label>
-        <div class="flex gap-2">
+        <div class="flex flex-col sm:flex-row gap-2 w-full">
           <input type="text" id="searchWord" placeholder="例: りんご" 
-                 class="flex-grow px-4 py-3 rounded-xl border-2 border-amber-200 focus:border-amber-500 focus:outline-none transition text-base" />
-          <button id="btnStamp" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold px-5 py-3 rounded-xl shadow-md transition flex items-center gap-1 shrink-0">
+                 class="flex-grow px-4 py-3 rounded-xl border-2 border-amber-200 focus:border-amber-500 focus:outline-none transition text-base w-full" />
+          <button id="btnStamp" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold px-5 py-3 rounded-xl shadow-md transition flex items-center justify-center gap-1 shrink-0 sm:w-auto w-full">
             <span>回答する!</span>
           </button>
         </div>
@@ -279,7 +279,7 @@
             // スタンプ（画像）が公開された状態：
             // ワード名を下部に少し重ねる、または表示するため、文字サイズを小さく調整
             textEl.className = 'font-bold text-xs md:text-sm text-amber-900 bg-amber-200/90 py-0.5 px-2 rounded-full absolute bottom-1.5 z-20 shadow-sm break-all max-w-[90%]';
-            textEl.textContent = cell.word || '(空欄)';
+            //textEl.textContent = cell.word || '(空欄)';
           } else {
             // 未オープンの状態：中央に大きく「？」
             textEl.className = 'font-black text-2xl md:text-3xl text-stone-400/80 tracking-widest my-auto';
